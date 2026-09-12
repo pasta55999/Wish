@@ -5,7 +5,8 @@ Wish is a local hackathon prototype: activate the unpacked Chrome extension on a
 ## What works
 
 - Manifest V3 extension activation from the toolbar on the current page
-- A floating Wish button and compact prompt UI in an isolated Shadow DOM
+- A labeled floating **Wish** button and compact prompt UI in an isolated Shadow DOM
+- Type a request or click **Describe by voice** for browser speech-to-text; transcription is reviewable and editable before any page data is shared
 - One reliable property-card adapter: stable listing IDs, duplicate suffixes, visible-price validation, and an unsupported-page message
 - A mandatory listing-data review before the backend shares selected visible card data with an external model
 - Page-native selection checkboxes, side-by-side comparison, annual-rent budget filtering, editable fixed deposit/agency-fee assumptions, equal installments, partial-upfront calculations, and CSV export with provenance
@@ -24,6 +25,8 @@ This is a reliable adapter for property cards with a visible title, currency, pr
 2. Open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select the `extension` folder in this project.
 3. Visit [http://localhost:8787](http://localhost:8787), click the Wish extension icon, then try: `Compare these apartments side by side. Add a AED 150k budget and let me enter deposit and agency fees.`
 4. The app starts in a clearly marked **Offline/demo mode** until OpenRouter is configured.
+
+Voice is an optional browser feature. It starts only after clicking **Describe by voice**, shows the transcript in the editable prompt, and falls back to typing if unsupported or microphone access is denied. Some Chrome speech-recognition implementations use a browser speech service; no raw audio is sent to the Wish backend.
 
 ## API configuration
 
