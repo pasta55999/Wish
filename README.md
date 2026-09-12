@@ -4,6 +4,8 @@ Wish is a local hackathon prototype: activate the unpacked Chrome extension on a
 
 The playground also ships with a standalone **✦ Wish** preview button, so the type-and-voice prompt can be demonstrated at `http://localhost:8787` even before loading the extension. It works only with the page's clearly labelled fictional listings.
 
+For the product premise, end-to-end flow diagram, guardrails, and a step-by-step use guide, see [Working idea and usage](docs/WORKING_IDEA_AND_USAGE.md).
+
 ## What works
 
 - Manifest V3 extension activation from the toolbar on the current page
