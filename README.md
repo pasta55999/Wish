@@ -2,6 +2,8 @@
 
 Wish is a local hackathon prototype: activate the unpacked Chrome extension on a property-listing page, describe a feature you wish the page had, and get safe, working comparison controls in that page. The included Harbor & Grove page is a fictional, explicitly illustrative playground.
 
+The playground also ships with a standalone **✦ Wish** preview button, so the type-and-voice prompt can be demonstrated at `http://localhost:8787` even before loading the extension. It works only with the page's clearly labelled fictional listings.
+
 ## What works
 
 - Manifest V3 extension activation from the toolbar on the current page
