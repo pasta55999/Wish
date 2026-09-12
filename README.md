@@ -1,17 +1,19 @@
-# Wish — property-page tools
+# Wish — turn any page into the experience you need
 
-Wish is a local hackathon prototype: activate the unpacked Chrome extension on a property-listing page, describe a feature you wish the page had, and get safe, working comparison controls in that page. The included Harbor & Grove page is a fictional, explicitly illustrative playground.
+Wish is a page-native assistant: activate it on a compatible webpage, say what outcome you need, and Wish creates a small, safe layer of purpose-built controls around the information already on the page. The ambition is broader than search: travel planning, shopping decisions, job discovery, learning, research, and service journeys can all become more useful when people can ask for the tool they need in the moment.
+
+The current working prototype is the first vertical: property decisions. It demonstrates the platform with comparison, budgeting, transparent assumptions, and approved research over fictional Harbor & Grove listings. The property adapter is deliberately narrow today; the interaction model is designed to be reusable across page types.
 
 The playground also ships with a standalone **✦ Wish** preview button, so the type-and-voice prompt can be demonstrated at `http://localhost:8787` even before loading the extension. It works only with the page's clearly labelled fictional listings.
 
-For the product premise, end-to-end flow diagram, guardrails, and a step-by-step use guide, see [Working idea and usage](docs/WORKING_IDEA_AND_USAGE.md).
+For the multi-use-case product premise, end-to-end flow diagram, guardrails, and a step-by-step use guide, see [Working idea and usage](docs/WORKING_IDEA_AND_USAGE.md).
 
 ## What works
 
-- Manifest V3 extension activation from the toolbar on the current page
+- Manifest V3 extension activation from the toolbar on the current page — the reusable Wish entry point
 - A labeled floating **Wish** button and compact prompt UI in an isolated Shadow DOM
 - Type a request or click **Describe by voice** for browser speech-to-text; transcription is reviewable and editable before any page data is shared
-- One reliable property-card adapter: stable listing IDs, duplicate suffixes, visible-price validation, and an unsupported-page message
+- One reliable property-card adapter today: stable listing IDs, duplicate suffixes, visible-price validation, and an honest unsupported-page message; future adapters can serve other page types
 - A mandatory listing-data review before the backend shares selected visible card data with an external model
 - Page-native selection checkboxes, side-by-side comparison, annual-rent budget filtering, editable fixed deposit/agency-fee assumptions, equal installments, partial-upfront calculations, and CSV export with provenance
 - State preservation in `chrome.storage.local` when the same page fingerprint is restored
@@ -21,7 +23,7 @@ For the product premise, end-to-end flow diagram, guardrails, and a step-by-step
 
 ## Limits
 
-This is a reliable adapter for property cards with a visible title, currency, price, and monthly/annual period. It is not a universal extractor, and it does not book, pay, alter accounts, or send messages. Listings with different currencies are not compared or converted. Missing fees remain unknown. The partial upfront estimate is only `first equal rent installment + refundable deposit + fixed agency fee`; unlisted charges are excluded.
+The **platform idea** is intentionally broad; the **implemented adapter** is currently property cards with a visible title, currency, price, and monthly/annual period. It is not yet a universal extractor, and it does not book, pay, alter accounts, or send messages. Listings with different currencies are not compared or converted. Missing fees remain unknown. The partial upfront estimate is only `first equal rent installment + refundable deposit + fixed agency fee`; unlisted charges are excluded.
 
 ## Local setup (Windows)
 
