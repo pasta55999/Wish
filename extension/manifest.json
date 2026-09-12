@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Wish — page tools",
+  "version": "0.1.0",
+  "description": "Turn a property-listing request into safe comparison tools on the current page.",
+  "action": { "default_title": "Activate Wish on this page" },
+  "background": { "service_worker": "background.js", "type": "module" },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["http://127.0.0.1:8787/*", "http://localhost:8787/*"]
+}
+
