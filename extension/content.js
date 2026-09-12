@@ -16,14 +16,17 @@
     listings: [], fingerprint: "", open: true, prompt: "", reviewOpen: false, reviewIds: new Set(),
     selectedIds: new Set(), plan: null, mode: null, status: "", error: "", loading: false,
     budgetAnnual: "", userBudget: false, assumptions: { installments: "1", deposit: "", agencyFee: "" },
-    sources: [], pageChanged: false, appliedOnce: false, observer: null
+    sources: [], pageChanged: false, appliedOnce: false, observer: null, voiceListening: false, voiceMessage: ""
   };
   const savedDisplays = new Map();
   const storageKey = `wish:${location.origin}${location.pathname}`;
   let refreshTimer;
+  let recognition = null;
+  let voiceStartPrompt = "";
+  let voiceFinalText = "";
 
   const css = `
-    :host{all:initial}.wish-shell{font-family:ui-rounded,"SF Pro Rounded","Segoe UI",sans-serif;color:#15332d;position:fixed;right:20px;bottom:20px;z-index:2147483647;font-size:13px;line-height:1.4}.wish-bubble{position:absolute;right:0;bottom:0;width:58px;height:58px;border:0;border-radius:50%;background:linear-gradient(135deg,#2d6254,#83ad79);color:#fff;box-shadow:0 12px 30px #15332d52;cursor:pointer;font-weight:800;font-size:20px;transition:transform .2s}.wish-bubble:hover{transform:translateY(-2px) scale(1.02)}.wish-panel{width:min(440px,calc(100vw - 32px));max-height:min(760px,calc(100vh - 104px));overflow:auto;background:#fffdf9;border:1px solid #d8e1d2;border-radius:20px;box-shadow:0 22px 70px #17382b42;padding:16px;margin-bottom:12px}.wish-panel[hidden]{display:none}.wish-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.wish-brand{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:800;letter-spacing:-.5px}.wish-spark{background:#e5f1df;border-radius:10px;width:28px;height:28px;display:grid;place-items:center;color:#31654d}.wish-x,.wish-link{border:0;background:transparent;padding:5px;color:#536560;cursor:pointer}.wish-x{font-size:21px;line-height:1}.wish-sub{margin:0 0 12px;color:#60706a;font-size:12px}.wish-prompt{display:block;width:100%;border:1px solid #d4ded0;border-radius:12px;background:#fff;padding:10px 11px;min-height:76px;resize:vertical;color:#15332d;font:inherit;outline:none}.wish-prompt:focus,.wish-input:focus{border-color:#719966;box-shadow:0 0 0 3px #dcebd6}.wish-actions{display:flex;gap:8px;align-items:center;margin-top:9px}.wish-primary,.wish-secondary{border:0;border-radius:10px;padding:9px 12px;cursor:pointer;font:600 12px inherit}.wish-primary{background:#24594b;color:white}.wish-primary:disabled{opacity:.55;cursor:not-allowed}.wish-secondary{background:#e9f0e4;color:#2e554a}.wish-section{border-top:1px solid #e5e8e1;margin-top:14px;padding-top:13px}.wish-title{font-size:13px;font-weight:800;margin:0 0 5px}.wish-help{font-size:11px;color:#68746f;margin:0 0 9px}.wish-notice{margin-top:10px;border-radius:10px;padding:9px 10px;font-size:11px}.wish-notice.info{background:#edf4e9;color:#2d574a}.wish-notice.warn{background:#fff4dc;color:#785514}.wish-notice.error{background:#ffebe7;color:#8b3327}.wish-review-list{border:1px solid #e1e6dc;border-radius:10px;overflow:hidden}.wish-review-row{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border-bottom:1px solid #edf0eb;cursor:pointer}.wish-review-row:last-child{border-bottom:0}.wish-review-row input{margin:3px 0 0}.wish-review-row b{display:block;font-size:12px}.wish-review-row span{display:block;color:#66736e;font-size:11px}.wish-badge{display:inline-flex;background:#fff1cf;color:#74500a;border-radius:99px;padding:3px 7px;font-size:10px;font-weight:700;margin-left:7px;vertical-align:middle}.wish-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wish-field{display:block;color:#53635d;font-size:11px;font-weight:600}.wish-input{display:block;width:100%;margin-top:4px;border:1px solid #d6ded1;border-radius:8px;padding:7px;background:white;color:#16332d;font:inherit}.wish-table-wrap{overflow:auto;border:1px solid #e0e6de;border-radius:10px}.wish-table{width:100%;border-collapse:collapse;font-size:11px;min-width:380px}.wish-table th{background:#f0f5ec;text-align:left;font-size:10px;color:#5b6963;padding:7px;font-weight:800}.wish-table td{padding:8px 7px;border-top:1px solid #edf0eb;vertical-align:top}.wish-empty{padding:12px;color:#6b7670;text-align:center;font-size:11px}.wish-source{display:block;border:1px solid #e1e7df;border-radius:10px;padding:9px;margin:7px 0;text-decoration:none;color:#15332d;background:#fff}.wish-source:hover{border-color:#92ad89}.wish-source b,.wish-source span{display:block}.wish-source span{color:#64716b;font-size:11px;margin-top:3px}.wish-footer{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}.wish-small{font-size:11px}.wish-hidden-count{color:#6b756e;font-size:11px;margin:7px 0 0}.wish-capabilities{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.wish-chip{padding:3px 7px;border-radius:99px;background:#f1f5ef;color:#547052;font-size:10px}.wish-spinner{display:inline-block;width:11px;height:11px;border:2px solid #ffffff66;border-top-color:white;border-radius:50%;animation:wish-spin .7s linear infinite;margin-right:5px;vertical-align:-1px}@keyframes wish-spin{to{transform:rotate(360deg)}}@media(max-width:520px){.wish-shell{right:12px;bottom:12px}.wish-panel{max-height:calc(100vh - 88px)}}`;
+    :host{all:initial}.wish-shell{font-family:ui-rounded,"SF Pro Rounded","Segoe UI",sans-serif;color:#15332d;position:fixed;right:20px;bottom:20px;z-index:2147483647;font-size:13px;line-height:1.4}.wish-bubble{position:absolute;right:0;bottom:0;min-width:92px;height:54px;padding:0 17px;border:0;border-radius:999px;background:linear-gradient(135deg,#2d6254,#83ad79);color:#fff;box-shadow:0 12px 30px #15332d52;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:-.2px;transition:transform .2s}.wish-bubble:hover{transform:translateY(-2px) scale(1.02)}.wish-panel{width:min(440px,calc(100vw - 32px));max-height:min(760px,calc(100vh - 104px));overflow:auto;background:#fffdf9;border:1px solid #d8e1d2;border-radius:20px;box-shadow:0 22px 70px #17382b42;padding:16px;margin-bottom:12px}.wish-panel[hidden]{display:none}.wish-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.wish-brand{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:800;letter-spacing:-.5px}.wish-spark{background:#e5f1df;border-radius:10px;width:28px;height:28px;display:grid;place-items:center;color:#31654d}.wish-x,.wish-link{border:0;background:transparent;padding:5px;color:#536560;cursor:pointer}.wish-x{font-size:21px;line-height:1}.wish-sub{margin:0 0 12px;color:#60706a;font-size:12px}.wish-prompt{display:block;width:100%;border:1px solid #d4ded0;border-radius:12px;background:#fff;padding:10px 11px;min-height:76px;resize:vertical;color:#15332d;font:inherit;outline:none}.wish-prompt:focus,.wish-input:focus{border-color:#719966;box-shadow:0 0 0 3px #dcebd6}.wish-actions{display:flex;gap:8px;align-items:center;margin-top:9px}.wish-primary,.wish-secondary{border:0;border-radius:10px;padding:9px 12px;cursor:pointer;font:600 12px inherit}.wish-primary{background:#24594b;color:white}.wish-primary:disabled{opacity:.55;cursor:not-allowed}.wish-secondary{background:#e9f0e4;color:#2e554a}.wish-secondary[aria-pressed="true"]{background:#f7d8d1;color:#833528}.wish-section{border-top:1px solid #e5e8e1;margin-top:14px;padding-top:13px}.wish-title{font-size:13px;font-weight:800;margin:0 0 5px}.wish-help{font-size:11px;color:#68746f;margin:0 0 9px}.wish-notice{margin-top:10px;border-radius:10px;padding:9px 10px;font-size:11px}.wish-notice.info{background:#edf4e9;color:#2d574a}.wish-notice.warn{background:#fff4dc;color:#785514}.wish-notice.error{background:#ffebe7;color:#8b3327}.wish-review-list{border:1px solid #e1e6dc;border-radius:10px;overflow:hidden}.wish-review-row{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border-bottom:1px solid #edf0eb;cursor:pointer}.wish-review-row:last-child{border-bottom:0}.wish-review-row input{margin:3px 0 0}.wish-review-row b{display:block;font-size:12px}.wish-review-row span{display:block;color:#66736e;font-size:11px}.wish-badge{display:inline-flex;background:#fff1cf;color:#74500a;border-radius:99px;padding:3px 7px;font-size:10px;font-weight:700;margin-left:7px;vertical-align:middle}.wish-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wish-field{display:block;color:#53635d;font-size:11px;font-weight:600}.wish-input{display:block;width:100%;margin-top:4px;border:1px solid #d6ded1;border-radius:8px;padding:7px;background:white;color:#16332d;font:inherit}.wish-table-wrap{overflow:auto;border:1px solid #e0e6de;border-radius:10px}.wish-table{width:100%;border-collapse:collapse;font-size:11px;min-width:380px}.wish-table th{background:#f0f5ec;text-align:left;font-size:10px;color:#5b6963;padding:7px;font-weight:800}.wish-table td{padding:8px 7px;border-top:1px solid #edf0eb;vertical-align:top}.wish-empty{padding:12px;color:#6b7670;text-align:center;font-size:11px}.wish-source{display:block;border:1px solid #e1e7df;border-radius:10px;padding:9px;margin:7px 0;text-decoration:none;color:#15332d;background:#fff}.wish-source:hover{border-color:#92ad89}.wish-source b,.wish-source span{display:block}.wish-source span{color:#64716b;font-size:11px;margin-top:3px}.wish-footer{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}.wish-small{font-size:11px}.wish-hidden-count{color:#6b756e;font-size:11px;margin:7px 0 0}.wish-capabilities{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.wish-chip{padding:3px 7px;border-radius:99px;background:#f1f5ef;color:#547052;font-size:10px}.wish-spinner{display:inline-block;width:11px;height:11px;border:2px solid #ffffff66;border-top-color:white;border-radius:50%;animation:wish-spin .7s linear infinite;margin-right:5px;vertical-align:-1px}@keyframes wish-spin{to{transform:rotate(360deg)}}@media(max-width:520px){.wish-shell{right:12px;bottom:12px}.wish-panel{max-height:calc(100vh - 88px)}}`;
   const style = document.createElement("style");
   style.textContent = css;
   shadow.append(style);
@@ -208,6 +211,64 @@
     }
     return container;
   }
+  function voiceErrorMessage(error) {
+    const code = error?.error || "unknown";
+    if (["not-allowed", "service-not-allowed"].includes(code)) return "Microphone access was not granted. You can still type your request.";
+    if (code === "no-speech") return "No speech was detected. Try again or type your request.";
+    if (code === "audio-capture") return "No microphone is available. You can still type your request.";
+    if (code === "network") return "The browser speech service is unavailable. You can still type your request.";
+    return "Voice input could not start in this browser. You can still type your request.";
+  }
+  function updateVoiceTranscript(interim = "") {
+    const combined = [voiceStartPrompt, voiceFinalText, interim].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+    state.prompt = combined;
+    const prompt = shadow.querySelector(".wish-prompt");
+    if (prompt) prompt.value = state.prompt;
+  }
+  function stopVoice() {
+    if (recognition && state.voiceListening) {
+      state.voiceMessage = "Finishing your voice description…";
+      recognition.stop();
+    }
+  }
+  function toggleVoice() {
+    if (state.voiceListening) { stopVoice(); render(); return; }
+    const Recognition = globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
+    if (!Recognition) {
+      state.voiceMessage = "Voice input is not supported here. Type your request instead.";
+      state.error = "";
+      render();
+      return;
+    }
+    voiceStartPrompt = normalize(state.prompt);
+    voiceFinalText = "";
+    recognition = new Recognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.lang = navigator.language || "en-US";
+    recognition.onstart = () => { state.voiceListening = true; state.voiceMessage = "Listening… describe the feature you want."; state.error = ""; render(); };
+    recognition.onresult = (event) => {
+      let interim = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const transcript = event.results[index][0]?.transcript || "";
+        if (event.results[index].isFinal) voiceFinalText += `${transcript} `;
+        else interim += transcript;
+      }
+      updateVoiceTranscript(interim);
+      state.voiceMessage = interim ? "Listening…" : "Voice description captured. Review or edit it before continuing.";
+      render();
+    };
+    recognition.onerror = (event) => { state.voiceListening = false; state.voiceMessage = voiceErrorMessage(event); recognition = null; render(); };
+    recognition.onend = () => {
+      if (state.voiceListening) state.voiceMessage = state.prompt ? "Voice description captured. Review or edit it before continuing." : "Voice input ended. You can try again or type your request.";
+      state.voiceListening = false;
+      recognition = null;
+      render();
+    };
+    try { recognition.start(); }
+    catch { state.voiceMessage = "Voice input is busy or unavailable. You can still type your request."; recognition = null; render(); }
+  }
   function render() {
     shadow.querySelector(".wish-shell")?.remove();
     const shell = el("div", { className: "wish-shell" });
@@ -219,11 +280,13 @@
     if (!state.listings.length) {
       panel.append(el("p", { className: "wish-sub", text: "Wish could not reliably identify property listings on this page." }), el("div", { className: "wish-notice warn", text: "This adapter supports structured property cards with a visible currency, price period, and title. Try the included illustrative playground or provide a saved page sample." }));
     } else {
-      const subtitle = el("p", { className: "wish-sub", text: `Wish found ${state.listings.length} listing${state.listings.length === 1 ? "" : "s"}. Describe the tool you wish this page had.` });
+      const subtitle = el("p", { className: "wish-sub", text: `Wish found ${state.listings.length} listing${state.listings.length === 1 ? "" : "s"}. Type or describe the tool you wish this page had.` });
       const prompt = el("textarea", { className: "wish-prompt", value: state.prompt, placeholder: "e.g. Compare these homes, add a AED 150k budget, and show upfront costs.", ariaLabel: "What feature do you wish this page had?", onInput: (event) => { state.prompt = event.target.value; } });
       prompt.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") beginReview(); });
       const submit = el("button", { className: "wish-primary", disabled: state.loading, onClick: beginReview }, [state.loading ? el("span", { className: "wish-spinner" }) : null, document.createTextNode(state.loading ? "Working…" : "Plan my tools")]);
-      panel.append(subtitle, prompt, el("div", { className: "wish-actions" }, [submit, el("button", { className: "wish-link", text: "Example", onClick: () => { state.prompt = "Compare these apartments side by side. Add a AED 150k budget and let me enter deposit and agency fees."; render(); } })]), el("div", { className: "wish-capabilities" }, ["Compare", "Budget", "Upfront estimate", "Research"].map((value) => el("span", { className: "wish-chip", text: value }))));
+      const voice = el("button", { className: "wish-secondary", text: state.voiceListening ? "■ Stop voice" : "🎙 Describe by voice", ariaLabel: state.voiceListening ? "Stop voice description" : "Describe your request by voice", onClick: toggleVoice });
+      voice.setAttribute("aria-pressed", String(state.voiceListening));
+      panel.append(subtitle, prompt, el("div", { className: "wish-actions" }, [submit, voice, el("button", { className: "wish-link", text: "Example", onClick: () => { state.prompt = "Compare these apartments side by side. Add a AED 150k budget and let me enter deposit and agency fees."; render(); } })]), state.voiceMessage ? el("div", { className: `wish-notice ${state.voiceListening ? "info" : "warn"}`, text: state.voiceMessage }) : null, el("p", { className: "wish-help", text: "Voice starts only when you press the button. No audio goes to Wish; your browser may use its speech-recognition service. Review the transcript before continuing." }), el("div", { className: "wish-capabilities" }, ["Compare", "Budget", "Upfront estimate", "Research"].map((value) => el("span", { className: "wish-chip", text: value }))));
 
       if (state.reviewOpen) panel.append(renderReview());
       if (state.error) panel.append(el("div", { className: "wish-notice error", text: state.error }));
@@ -231,7 +294,7 @@
       if (state.mode === "local-demo") panel.append(el("div", { className: "wish-notice warn", text: "Offline/demo mode — this configuration was made locally. It did not call OpenRouter." }));
       if (state.plan) panel.append(renderToolArea());
     }
-    const bubble = el("button", { className: "wish-bubble", text: "✦", ariaLabel: state.open ? "Minimize Wish" : "Open Wish", onClick: () => { state.open = !state.open; render(); } });
+    const bubble = el("button", { className: "wish-bubble", text: "✦  Wish", ariaLabel: state.open ? "Minimize Wish" : "Open Wish", onClick: () => { state.open = !state.open; render(); } });
     shell.append(panel, bubble); shadow.append(shell);
   }
   function renderReview() {
@@ -315,7 +378,7 @@
     state.status = "CSV exported with value provenance."; render();
   }
   async function clearSaved() { await message("wish:remove-saved", { key: storageKey }); state.status = "Saved Wish setup cleared for this page."; render(); }
-  function destroy() { state.observer?.disconnect(); clearTimeout(refreshTimer); restorePage(); host.remove(); }
+  function destroy() { try { recognition?.abort(); } catch {} recognition = null; state.observer?.disconnect(); clearTimeout(refreshTimer); restorePage(); host.remove(); }
   host.addEventListener("wish:focus", () => { state.open = true; render(); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && state.open) { state.open = false; render(); } });
   refreshListings(false);
