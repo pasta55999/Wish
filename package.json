@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node backend/server.mjs",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
-    "check": "node --check backend/server.mjs && node --check backend/core.mjs && node --check extension/content.js && node --check extension/background.js"
+    "check": "node --check backend/server.mjs && node --check backend/core.mjs && node --check extension/content.js && node --check extension/background.js && node --check demo/wish-preview.js"
   }
 }
 
