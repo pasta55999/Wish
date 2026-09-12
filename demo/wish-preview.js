@@ -57,7 +57,7 @@
     if (!Recognition) { state.voiceNote = "Voice input is not supported in this browser. Type your request instead."; render(); return; }
     voiceBase = clean(state.prompt); voiceFinal = "";
     recognition = new Recognition(); recognition.interimResults = true; recognition.continuous = false; recognition.maxAlternatives = 1; recognition.lang = navigator.language || "en-US";
-    recognition.onstart = () => { state.listening = true; state.voiceNote = "Listening… say what feature you wish this property page had."; render(); };
+    recognition.onstart = () => { state.listening = true; state.voiceNote = "Listening… say what you wish this page could do for you."; render(); };
     recognition.onresult = (event) => {
       let interim = "";
       for (let index = event.resultIndex; index < event.results.length; index += 1) {
@@ -128,7 +128,7 @@
     const wrap = el("div", { className: "wish-wrap" });
     const panel = el("aside", { className: "wish-card" }); panel.hidden = !state.open;
     panel.append(el("div", { className: "wish-head" }, [el("div", { className: "wish-brand" }, [el("span", { text: "✦" }), document.createTextNode("Wish")]), el("button", { className: "wish-close", text: "×", ariaLabel: "Close Wish", onClick: () => { state.open = false; render(); } })]));
-    panel.append(el("p", { className: "wish-copy", text: "What do you wish this property page could do? Type it, or tell Wish out loud." }));
+    panel.append(el("p", { className: "wish-copy", text: "What do you wish this page could do for you? Type it, or tell Wish out loud." }));
     const input = el("textarea", { className: "wish-text", value: state.prompt, placeholder: "Compare these homes, add a AED 150k budget, and show upfront costs.", ariaLabel: "Describe your Wish", onInput: (event) => { state.prompt = event.target.value; } });
     panel.append(input);
     const voice = el("button", { className: "wish-secondary", text: state.listening ? "■ Stop voice" : "🎙 Talk to Wish", onClick: toggleVoice }); voice.dataset.active = String(state.listening);
